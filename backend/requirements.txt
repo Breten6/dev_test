@@ -1,0 +1,6 @@
+fastapi
+openai
+pydantic
+pymupdf
+pytest
+uvicorn
