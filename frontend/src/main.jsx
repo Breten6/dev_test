@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
+import { CustomerInquiry } from "./comparison";
 import "./styles.css";
 
 const fields = [
@@ -28,7 +29,7 @@ async function request(url, options) {
   return payload;
 }
 
-function ProductReview({ product, onReviewed }) {
+function ProductReview({ product, onReviewed, onEdit }) {
   const [values, setValues] = useState(product.reviewed ?? product.extracted);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +95,7 @@ function ProductReview({ product, onReviewed }) {
                     value={values[name] ?? ""}
                     onChange={(event) => {
                       setValues({ ...values, [name]: event.target.value });
+                      onEdit(product.product_id);
                       setSaved(false);
                       setError("");
                     }}
@@ -118,6 +120,7 @@ function ProductReview({ product, onReviewed }) {
 function App() {
   const [file, setFile] = useState(null);
   const [products, setProducts] = useState([]);
+  const [dirtyProducts, setDirtyProducts] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -144,6 +147,7 @@ function App() {
   }
 
   function updateProduct(reviewed) {
+    setDirtyProducts((current) => current.filter((id) => id !== reviewed.product_id));
     setProducts((current) => current.map((product) =>
       product.product_id === reviewed.product_id ? reviewed : product
     ));
@@ -168,8 +172,14 @@ function App() {
         {error && <p role="alert">{error}</p>}
       </form>
       {products.map((product) => (
-        <ProductReview key={product.product_id} product={product} onReviewed={updateProduct} />
+        <ProductReview
+          key={product.product_id}
+          product={product}
+          onReviewed={updateProduct}
+          onEdit={(id) => setDirtyProducts((current) => current.includes(id) ? current : [...current, id])}
+        />
       ))}
+      <CustomerInquiry products={products} dirty={dirtyProducts.length > 0} request={request} />
     </main>
   );
 }
